@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Baccarat Side-Bet EV</title>
+<title>Baccarat EV Tracker</title>
 <style>
 :root {
   color-scheme: dark;
@@ -75,7 +75,7 @@ input, select {
 </head>
 <body>
 <main>
-  <h1>Baccarat Side-Bet EV</h1>
+  <h1>Baccarat EV Tracker</h1>
   <div class="sub">Tap the exact rank of every exposed card, including burn cards. Baccarat totals still treat 10/J/Q/K as zero, while pair bets distinguish their ranks.</div>
 
   <section class="panel">
@@ -167,8 +167,8 @@ const BETS = [
   ["panda8","Panda 8"],
   ["tiger6","Tiger 6"],
   ["super6","Super 6"],
-  ["natural8","Banker Natural 8"],
-  ["natural9","Banker Natural 9"]
+  ["natural8","Natural 8"],
+  ["natural9","Natural 9"]
 ];
 
 const $ = id => document.getElementById(id);
@@ -242,7 +242,7 @@ function renderResults(data) {
     const r = data[key];
     const evClass = r.ev > 0 ? "good" : "bad";
     const rec = recommendedBet(r.kelly);
-    return `<article class="bet">
+    /*return `<article class="bet">
       <div class="bethead">
         <div class="betname">${label}</div>
         <div class="ev ${evClass}">${pct(r.ev)}</div>
@@ -252,6 +252,17 @@ function renderResults(data) {
         <div>Selected Kelly bet: <strong>${money(rec)}</strong></div>
         <div>Variance: <strong>${r.variance.toFixed(3)}</strong></div>
         <div>Cards left: <strong>${data.cardsRemaining}</strong></div>
+      </div>
+    </article>`;*/
+    return `<article class="bet">
+      <div class="bethead">
+        <div class="betname">${label}</div>
+        <div class="ev ${evClass}">${pct(r.ev)}</div>
+      </div>
+      <div class="betmeta">
+        <div>Full Kelly: <strong>${(r.kelly*100).toFixed(3)}%</strong></div>
+        <div>Selected Kelly bet: <strong>${money(rec)}</strong></div>
+        <div>Variance: <strong>${r.variance.toFixed(3)}</strong></div>
       </div>
     </article>`;
   }).join("");
