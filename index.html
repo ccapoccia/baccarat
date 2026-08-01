@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Baccarat EV Tracker</title>
+<title>Baccarat Side-Bet EV</title>
 <style>
 :root {
   color-scheme: dark;
@@ -75,7 +75,7 @@ input, select {
 </head>
 <body>
 <main>
-  <h1>Baccarat EV Tracker</h1>
+  <h1>Baccarat Side-Bet EV</h1>
   <div class="sub">Tap the exact rank of every exposed card, including burn cards. Baccarat totals still treat 10/J/Q/K as zero, while pair bets distinguish their ranks.</div>
 
   <section class="panel">
@@ -149,7 +149,7 @@ input, select {
   </details>
 
   <div class="note">
-    This file runs entirely in the browser. It stores the current shoe and settings locally on the device. Calculations enumerate six ordered card ranks. Baccarat outcomes use card values, while pair outcomes use exact ranks.
+    This file runs entirely in the browser. It stores the current shoe and settings locally on the device. Calculations enumerate six ordered card ranks. Baccarat outcomes use card values, while pair outcomes use exact ranks. Heavenly 9, Blazing 7s, and Cover All follow the supplied VBA payout rules.
   </div>
 </main>
 
@@ -162,13 +162,16 @@ const BETS = [
   ["playerPair","Player Pair"],
   ["bankerPair","Banker Pair"],
   ["dragon7","Dragon 7"],
+  ["panda8","Panda 8"],
+  ["heavenly9","Heavenly 9"],
+  ["blazing7s","Blazing 7s"],
+  ["coverAll","Cover All"],
   ["dragonBonusBanker","Dragon Bonus — Banker"],
   ["dragonBonusPlayer","Dragon Bonus — Player"],
-  ["panda8","Panda 8"],
   ["tiger6","Tiger 6"],
   ["super6","Super 6"],
-  ["natural8","Natural 8"],
-  ["natural9","Natural 9"]
+  ["natural8","Banker Natural 8"],
+  ["natural9","Banker Natural 9"]
 ];
 
 const $ = id => document.getElementById(id);
@@ -242,18 +245,6 @@ function renderResults(data) {
     const r = data[key];
     const evClass = r.ev > 0 ? "good" : "bad";
     const rec = recommendedBet(r.kelly);
-    /*return `<article class="bet">
-      <div class="bethead">
-        <div class="betname">${label}</div>
-        <div class="ev ${evClass}">${pct(r.ev)}</div>
-      </div>
-      <div class="betmeta">
-        <div>Full Kelly: <strong>${(r.kelly*100).toFixed(3)}%</strong></div>
-        <div>Selected Kelly bet: <strong>${money(rec)}</strong></div>
-        <div>Variance: <strong>${r.variance.toFixed(3)}</strong></div>
-        <div>Cards left: <strong>${data.cardsRemaining}</strong></div>
-      </div>
-    </article>`;*/
     return `<article class="bet">
       <div class="bethead">
         <div class="betname">${label}</div>
@@ -263,6 +254,7 @@ function renderResults(data) {
         <div>Full Kelly: <strong>${(r.kelly*100).toFixed(3)}%</strong></div>
         <div>Selected Kelly bet: <strong>${money(rec)}</strong></div>
         <div>Variance: <strong>${r.variance.toFixed(3)}</strong></div>
+        <div>Cards left: <strong>${data.cardsRemaining}</strong></div>
       </div>
     </article>`;
   }).join("");
@@ -292,8 +284,9 @@ self.onmessage = function(e) {
   const names = [
     "player","bankerCommission","bankerDragonPush","tie8",
     "playerPair","bankerPair",
-    "dragon7","dragonBonusBanker","dragonBonusPlayer",
-    "panda8","tiger6","super6","natural8","natural9"
+    "dragon7","panda8","heavenly9","blazing7s","coverAll",
+    "dragonBonusBanker","dragonBonusPlayer",
+    "tiger6","super6","natural8","natural9"
   ];
   const sum = Object.fromEntries(names.map(k=>[k,0]));
   const sum2 = Object.fromEntries(names.map(k=>[k,0]));
@@ -361,10 +354,45 @@ self.onmessage = function(e) {
               add("bankerPair", cc===d ? pairPayout : -1, w);
 
               // Side bets
-              add("dragon7", (bt>pt&&bt===7&&b3)?40:-1, w);
+              const dragon7Hit = (bt>pt && bt===7 && b3===1);
+              const panda8Hit = (pt>bt && pt===8 && p3===1);
+
+              add("dragon7", dragon7Hit ? 40 : -1, w);
+              add("panda8", panda8Hit ? 25 : -1, w);
+
+              // Heavenly 9
+              let heavenlyPayout = -1;
+              let heavenlyHit = false;
+              if (bt===9 && b3===1 && pt===9 && p3===1) {
+                heavenlyPayout = 75;
+                heavenlyHit = true;
+              } else if (pt===9 && p3===1) {
+                heavenlyPayout = 10;
+                heavenlyHit = true;
+              } else if (bt===9 && b3===1) {
+                heavenlyPayout = 10;
+                heavenlyHit = true;
+              }
+              add("heavenly9", heavenlyPayout, w);
+
+              // Blazing 7s
+              let blazingPayout = -1;
+              let blazingHit = false;
+              if (bt===7 && b3===0 && pt===7 && p3===0) {
+                blazingPayout = 50;
+                blazingHit = true;
+              } else if (bt===7 && b3===1 && pt===7 && p3===1) {
+                blazingPayout = 200;
+                blazingHit = true;
+              }
+              add("blazing7s", blazingPayout, w);
+
+              // Cover All wins if any covered event occurs.
+              const coverAllHit = dragon7Hit || panda8Hit || heavenlyHit || blazingHit;
+              add("coverAll", coverAllHit ? 6 : -1, w);
+
               add("dragonBonusBanker", db(natural,bt,pt), w);
               add("dragonBonusPlayer", db(natural,pt,bt), w);
-              add("panda8", (pt>bt&&pt===8&&p3)?25:-1, w);
               add("tiger6", (bt>pt&&bt===6&&!b3)?12:((bt>pt&&bt===6&&b3)?20:-1), w);
               add("super6", (bt>pt&&bt===6)?12:-1, w);
               add("natural8", (bt===8&&natural)?9:-1, w);
