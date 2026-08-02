@@ -60,6 +60,18 @@ button:active { transform:scale(.98); }
 .bad { color:var(--bad); }
 .betmeta { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; color:var(--muted); font-size:.83rem; }
 .betmeta strong { color:var(--text); }
+.countbox {
+  margin-top:10px; padding-top:10px; border-top:1px solid var(--line);
+  display:grid; gap:7px;
+}
+.countbox > div {
+  display:grid; grid-template-columns:52px 1fr; gap:8px; align-items:start;
+  font-size:.82rem;
+}
+.countbox span { color:var(--muted); }
+.countbox strong {
+  color:var(--text); font-weight:700; overflow-wrap:anywhere;
+}
 details summary { cursor:pointer; font-weight:700; }
 .settings { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
 label { color:var(--muted); font-size:.8rem; }
@@ -108,7 +120,7 @@ input, select {
     <div class="history" id="history">No cards entered.</div>
   </section>
 
-  <div class="note">Results are automatically ranked from the highest bettor EV to the lowest.</div>
+  <div class="note">Results are automatically ranked from the highest bettor EV to the lowest. For the six configured count systems, TC is the weighted total of exposed cards and RC is TC divided by decks remaining.</div>
   <section class="grid" id="results"></section>
 
   <details class="panel">
@@ -174,6 +186,15 @@ const BETS = [
   ["natural8","Banker Natural 8"],
   ["natural9","Banker Natural 9"]
 ];
+
+const COUNT_SYSTEMS = {
+  blazing7s: [1,0,-1,-1,-1,0,-6,2,2,1],
+  coverAll: [1,0,0,-1,-1,-1,-2,0,0,1],
+  dragonBonusPlayer: [2,3,3,1,0,0,-1,-2,-2,-1],
+  dragon7: [0,0,0,-1,-1,-1,-1,2,2,0],
+  heavenly9: [1,1,0,-1,-1,-1,-1,0,-2,1],
+  panda8: [1,1,-2,-2,-2,-1,-1,-2,4,1]
+};
 
 const $ = id => document.getElementById(id);
 let state = loadState();
@@ -241,6 +262,36 @@ function renderState() {
     btn.disabled = state.counts[r] <= 0;
   });
 }
+function cardValueIndexFromRank(rank) {
+  // Count-system order is 1,2,3,...,9,10 where 10 represents all zero-value cards.
+  return rank <= 8 ? rank : 9;
+}
+
+function countStatsForBet(key) {
+  const tags = COUNT_SYSTEMS[key];
+  if (!tags) return null;
+
+  const removedByValue = Array(10).fill(0);
+  for (const rank of state.history) {
+    removedByValue[cardValueIndexFromRank(rank)]++;
+  }
+
+  const totalCount = removedByValue.reduce((sum, n, i) => sum + n * tags[i], 0);
+  const decksRemaining = state.counts.reduce((a,b)=>a+b,0) / 52;
+  const realCount = decksRemaining > 0 ? totalCount / decksRemaining : 0;
+
+  const tally = removedByValue
+    .map((n, i) => `${i === 9 ? "10" : i + 1}:${n}`)
+    .join(" ");
+
+  return { tally, totalCount, realCount };
+}
+
+function signed(x, digits=2) {
+  const n = Number(x);
+  return `${n > 0 ? "+" : ""}${n.toFixed(digits)}`;
+}
+
 function renderResults(data) {
   const sortedBets = BETS
     .map(([key,label], index) => ({key, label, index, ev:data[key].ev}))
@@ -259,8 +310,16 @@ function renderResults(data) {
         <div>Full Kelly: <strong>${(r.kelly*100).toFixed(3)}%</strong></div>
         <div>Selected Kelly bet: <strong>${money(rec)}</strong></div>
         <div>Variance: <strong>${r.variance.toFixed(3)}</strong></div>
-        <!-- <div>Cards left: <strong>${data.cardsRemaining}</strong></div> -->
       </div>
+      ${(() => {
+        const cs = countStatsForBet(key);
+        if (!cs) return "";
+        return `<div class="countbox">
+          <div><span>Tally</span><strong>${cs.tally}</strong></div>
+          <div><span>TC</span><strong>${signed(cs.totalCount,0)}</strong></div>
+          <div><span>RC</span><strong>${signed(cs.realCount,2)}</strong></div>
+        </div>`;
+      })()}
     </article>`;
   }).join("");
   $("results").innerHTML = html;
