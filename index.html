@@ -50,8 +50,22 @@ function def(){return{decks:8,counts:fresh(8),history:[],profile:'hardRock',bank
 function load(){try{let x=JSON.parse(localStorage.getItem('bacLite4'));if(x&&x.counts?.length===13&&P[x.profile])return{...def(),...x,limits:{...limitsFor(x.profile),...(x.limits||{})},enabled:{...enabledFor(x.profile),...(x.enabled||{})},undo:[]}}catch{}return def()}let s=load();
 function save(){let x={...s,undo:[]};localStorage.setItem('bacLite4',JSON.stringify(x))}function snap(){let {undo,...x}=s;s.undo.push(JSON.stringify(x));if(s.undo.length>30)s.undo.shift()}
 function money(x){return(x<0?'-':'')+new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(Math.abs(x||0))}function pct(x){return(x*100).toFixed(3)+'%'}function cardsLeft(){return s.counts.reduce((a,b)=>a+b,0)}function shown(){return ALL.filter(k=>s.enabled[k])}function lim(k){return s.limits[k]||L(5,300)}function round(x){return Math.floor(x/Math.max(1,s.chip))*Math.max(1,s.chip)}
-function remainingByValue(){return [s.counts.slice(9).reduce((a,b)=>a+b,0),...s.counts.slice(0,9)]}
-function countInfo(k){let tags=COUNT_TAGS[k];if(!tags)return null;let rem=remainingByValue(),initial=[16*s.decks,...Array(9).fill(4*s.decks)],rc=0;for(let v=0;v<10;v++)rc+=(initial[v]-rem[v])*tags[v];let decksRemaining=cardsLeft()/52,tc=decksRemaining>0?rc/decksRemaining:0;return{rc,tc}}
+function remainingByCountOrder(){
+  // Count tags are ordered by baccarat point value:
+  // A(1), 2, 3, 4, 5, 6, 7, 8, 9, then 10/J/Q/K(0).
+  return [...s.counts.slice(0,9), s.counts.slice(9).reduce((a,b)=>a+b,0)]
+}
+function countInfo(k){
+  let tags=COUNT_TAGS[k];
+  if(!tags)return null;
+  let rem=remainingByCountOrder();
+  let initial=[...Array(9).fill(4*s.decks),16*s.decks];
+  let rc=0;
+  for(let v=0;v<10;v++)rc+=(initial[v]-rem[v])*tags[v];
+  let decksRemaining=cardsLeft()/52;
+  let tc=decksRemaining>0?rc/decksRemaining:0;
+  return{rc,tc}
+}
 function fmtCount(x){return(x>=0?'+':'')+(Math.abs(x-Math.round(x))<1e-9?Math.round(x):x.toFixed(2))}
 function rec(k){let r=latest?.[k];if(!r||r.kelly<=0)return 0;let n=round(s.bankroll*r.kelly*s.fraction),z=lim(k);return n<z.min?0:Math.min(n,z.max)}function betsNow(){let b={};shown().forEach(k=>{let n=rec(k);if(n)b[k]=n});let f=P[s.profile].forced;if(f&&s.enabled[f])b[f]=Math.max(b[f]||0,lim(f).min);return b}
 function render(){
