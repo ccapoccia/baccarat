@@ -1,565 +1,68 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Baccarat Side-Bet EV</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><title>Baccarat EV</title>
 <style>
-:root {
-  color-scheme: dark;
-  --bg:#0c1117; --panel:#151c24; --panel2:#1b2530; --text:#eef4fb;
-  --muted:#9fb0c1; --line:#2b3947; --good:#6ee7a8; --bad:#ff8a8a;
-  --accent:#72b7ff; --warning:#ffd27a;
-}
-* { box-sizing:border-box; }
-body {
-  margin:0; background:var(--bg); color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
-}
-main { max-width:760px; margin:0 auto; padding-bottom:28px; }
-h1 { font-size:1.35rem; margin:14px 0 4px; }
-.sub { color:var(--muted); font-size:.9rem; margin-bottom:12px; }
-.panel {
-  background:var(--panel); border:1px solid var(--line); border-radius:16px;
-  padding:14px; margin:10px 0;
-}
-.topline { display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
-.stat { font-size:.92rem; color:var(--muted); }
-.stat strong { color:var(--text); }
-.status { color:var(--warning); font-size:.88rem; min-height:1.2em; }
-.cards {
-  display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-top:12px;
-}
-button {
-  font:inherit; color:var(--text); background:var(--panel2);
-  border:1px solid var(--line); border-radius:13px; min-height:48px;
-  touch-action:manipulation;
-}
-button:active { transform:scale(.98); }
-.cardbtn { font-size:1.2rem; font-weight:700; }
-.cardbtn small { display:block; font-size:.66rem; color:var(--muted); font-weight:500; }
-.actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:9px; }
-.primary { border-color:var(--accent); }
-.danger { border-color:#8e4850; }
-.history {
-  color:var(--muted); font-size:.86rem; line-height:1.5; min-height:1.5em;
-  overflow-wrap:anywhere;
-}
-.grid { display:grid; gap:9px; }
-.bet {
-  background:var(--panel); border:1px solid var(--line); border-radius:15px;
-  padding:12px;
-}
-.bethead { display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
-.betname { font-weight:700; }
-.ev { font-size:1.15rem; font-weight:800; }
-.good { color:var(--good); }
-.bad { color:var(--bad); }
-.betmeta { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px; color:var(--muted); font-size:.83rem; }
-.betmeta strong { color:var(--text); }
-.countbox {
-  margin-top:10px; padding-top:10px; border-top:1px solid var(--line);
-  display:grid; gap:7px;
-}
-.countbox > div {
-  display:grid; grid-template-columns:52px 1fr; gap:8px; align-items:start;
-  font-size:.82rem;
-}
-.countbox span { color:var(--muted); }
-.countbox strong {
-  color:var(--text); font-weight:700; overflow-wrap:anywhere;
-}
-details summary { cursor:pointer; font-weight:700; }
-.settings { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
-label { color:var(--muted); font-size:.8rem; }
-input, select {
-  width:100%; margin-top:4px; padding:11px; border-radius:10px;
-  border:1px solid var(--line); background:#0f151c; color:var(--text); font:inherit;
-}
-.note { color:var(--muted); font-size:.78rem; line-height:1.4; margin-top:10px; }
-@media (min-width:620px) {
-  .grid { grid-template-columns:1fr 1fr; }
-}
+:root{color-scheme:dark;--bg:#0b1118;--p:#141d27;--p2:#1b2733;--t:#eef5fb;--m:#9db0c2;--l:#2c3b4a;--g:#6ee7a8;--r:#ff8c8c;--a:#73b9ff;--w:#ffd27a}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:10px;padding-top:max(10px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}main{max-width:780px;margin:auto}h1{font-size:1.35rem;margin:8px 0 3px}.sub,.note{color:var(--m);font-size:.82rem;line-height:1.4}.panel,.bet{background:var(--p);border:1px solid var(--l);border-radius:15px;padding:13px;margin:9px 0}.row{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}.stat{color:var(--m);font-size:.88rem}.stat strong{color:var(--t)}label{display:block;color:var(--m);font-size:.8rem}select,input{width:100%;margin-top:4px;padding:10px;background:#0f1720;color:var(--t);border:1px solid var(--l);border-radius:10px;font:inherit}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}button{min-height:45px;padding:7px;border:1px solid var(--l);border-radius:12px;background:var(--p2);color:var(--t);font:inherit;touch-action:manipulation}button:disabled{opacity:.35}.card{font-size:1.1rem;font-weight:700}.card small{display:block;font-size:.6rem;color:var(--m);font-weight:400}.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:8px}.primary{border-color:var(--a)}.danger{border-color:#8c4850}.status{color:var(--w);font-size:.84rem;min-height:1.2em;margin-top:7px}.history{color:var(--m);font-size:.78rem;line-height:1.4;margin-top:7px}.grid{display:grid;gap:8px}.bet{margin:0}.bethead{display:flex;justify-content:space-between;gap:10px}.betname{font-weight:700}.ev{font-weight:800;font-size:1.08rem}.good{color:var(--g)}.bad{color:var(--r)}.meta{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px;color:var(--m);font-size:.78rem}.meta strong{color:var(--t)}.profit{font-size:1.45rem;font-weight:800}.pill{border:1px solid var(--l);border-radius:999px;padding:4px 8px;font-size:.72rem;color:var(--m)}details summary{font-weight:700;cursor:pointer}.settings{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}table{width:100%;border-collapse:collapse;margin-top:9px;font-size:.78rem}th,td{text-align:left;padding:6px 3px;border-bottom:1px solid var(--l)}td input{margin:0;padding:7px}.usebet{width:20px;height:20px;padding:0;accent-color:var(--a)}.log{max-height:180px;overflow:auto;font-size:.75rem;color:var(--m)}.logrow{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--l)}@media(min-width:620px){.grid{grid-template-columns:1fr 1fr}.cards{grid-template-columns:repeat(7,1fr)}}
 </style>
-</head>
-<body>
-<main>
-  <h1>Baccarat Side-Bet EV</h1>
-  <div class="sub">Tap the exact rank of every exposed card, including burn cards. Baccarat totals still treat 10/J/Q/K as zero, while pair bets distinguish their ranks.</div>
-
-  <section class="panel">
-    <div class="topline">
-      <div class="stat">Cards remaining: <strong id="remaining">416</strong></div>
-      <div class="stat">Cards entered: <strong id="entered">0</strong></div>
-    </div>
-    <div class="status" id="status">Ready.</div>
-
-    <div class="cards">
-      <button class="cardbtn" data-rank="0">A<small>value 1</small></button>
-      <button class="cardbtn" data-rank="1">2</button>
-      <button class="cardbtn" data-rank="2">3</button>
-      <button class="cardbtn" data-rank="3">4</button>
-      <button class="cardbtn" data-rank="4">5</button>
-      <button class="cardbtn" data-rank="5">6</button>
-      <button class="cardbtn" data-rank="6">7</button>
-      <button class="cardbtn" data-rank="7">8</button>
-      <button class="cardbtn" data-rank="8">9</button>
-      <button class="cardbtn" data-rank="9">10<small>value 0</small></button>
-      <button class="cardbtn" data-rank="10">J<small>value 0</small></button>
-      <button class="cardbtn" data-rank="11">Q<small>value 0</small></button>
-      <button class="cardbtn" data-rank="12">K<small>value 0</small></button>
-    </div>
-
-    <div class="actions">
-      <button id="undo">Undo last</button>
-      <button id="reset" class="danger">New shoe</button>
-    </div>
-    <div class="history" id="history">No cards entered.</div>
-  </section>
-
-  <div class="note">Results are automatically ranked from the highest bettor EV to the lowest. For the six configured count systems, TC is the weighted total of exposed cards and RC is TC divided by decks remaining.</div>
-  <section class="grid" id="results"></section>
-
-  <details class="panel">
-    <summary>Settings</summary>
-    <div class="settings">
-      <label>Number of decks
-        <select id="decks">
-          <option value="6">6 decks</option>
-          <option value="8" selected>8 decks</option>
-        </select>
-      </label>
-      <label>Bankroll ($)
-        <input id="bankroll" type="number" min="0" step="100" value="10000">
-      </label>
-      <label>Kelly fraction
-        <select id="kellyFraction">
-          <option value="1">Full Kelly</option>
-          <option value="0.5">Half Kelly</option>
-          <option value="0.25" selected>Quarter Kelly</option>
-          <option value="0.125">Eighth Kelly</option>
-        </select>
-      </label>
-      <label>Chip increment ($)
-        <input id="chip" type="number" min="1" step="1" value="5">
-      </label>
-      <label>Minimum side bet ($)
-        <input id="minBet" type="number" min="0" step="1" value="5">
-      </label>
-      <label>Maximum side bet ($)
-        <input id="maxBet" type="number" min="0" step="5" value="300">
-      </label>
-      <label>Pair payout (to 1)
-        <input id="pairPayout" type="number" min="1" step="1" value="11">
-      </label>
-    </div>
-    <div class="note">
-      Kelly sizing uses the exact payout distribution from the current remaining shoe. Pair bets use the exact ranks of the first two cards dealt to the applicable hand and default to 11-to-1. For example, 10–10 is a pair; 10–J is not. A recommended wager of $0 means the calculated edge is non-positive or the Kelly amount is below the table minimum.
-    </div>
-  </details>
-
-  <div class="note">
-    This file runs entirely in the browser. It stores the current shoe and settings locally on the device. Calculations enumerate six ordered card ranks. Baccarat outcomes use card values, while pair outcomes use exact ranks. Heavenly 9, Blazing 7s, and Cover All follow the supplied VBA payout rules.
-  </div>
-</main>
-
+</head><body><main>
+<h1>Baccarat EV</h1><div class="sub">Enter exact ranks. Enter burn cards first, then tap <b>Start Hands</b>. During play enter cards in normal order: P1, B1, P2, B2, then third cards.</div>
+<section class="panel"><label>Casino profile<select id="profile"></select></label></section>
+<section class="panel">
+<div class="row"><span class="stat">Remaining: <strong id="remaining"></strong></span><span class="stat">Entered: <strong id="entered"></strong></span><span class="pill" id="mode"></span></div>
+<div class="status" id="status"></div>
+<div class="cards" id="cards"></div>
+<div class="actions"><button id="start" class="primary">Start Hands</button><button id="undo">Undo</button><button id="reset" class="danger">New Shoe</button></div>
+<div class="history" id="history"></div>
+</section>
+<section class="panel"><div class="row"><div><div class="stat">Assumed profit this shoe</div><div id="profit" class="profit">$0</div></div><div class="stat">Hands settled: <strong id="hands"></strong></div></div><div class="note">All enabled, suggested non-zero bets are assumed placed. Hard Rock and Resorts World NC also force the profile minimum Banker bet each hand when that Banker bet is enabled.</div><div id="log" class="log"></div></section>
+<section id="results" class="grid"></section>
+<details class="panel"><summary>Bankroll and limits</summary><div class="settings"><label>Decks<select id="decks"><option>6</option><option selected>8</option></select></label><label>Bankroll ($)<input id="bankroll" type="number" min="0" step="100"></label><label>Kelly fraction<select id="fraction"><option value="1">Full</option><option value="0.5">Half</option><option value="0.25">Quarter</option><option value="0.125">Eighth</option></select></label><label>Chip increment ($)<input id="chip" type="number" min="1" step="1"></label></div><table><thead><tr><th>Use</th><th>Bet</th><th>Min</th><th>Max</th></tr></thead><tbody id="limits"></tbody></table><div class="note">Profile defaults load when the profile changes. Check or uncheck any bet to add or remove it for the current session; enabled bets are displayed and included in profit tracking.</div></details>
+<div class="note">Single offline HTML file. Pair EV uses exact ranks. Main and side-bet EVs use the remaining shoe.</div>
 <script>
-const BETS = [
-  ["player","Player"],
-  ["bankerCommission","Banker — 5% Commission"],
-  ["bankerDragonPush","Banker NC — Dragon 7 Push"],
-  ["tie8","Tie — 8 to 1"],
-  ["playerPair","Player Pair"],
-  ["bankerPair","Banker Pair"],
-  ["dragon7","Dragon 7"],
-  ["panda8","Panda 8"],
-  ["heavenly9","Heavenly 9"],
-  ["blazing7s","Blazing 7s"],
-  ["coverAll","Cover All"],
-  ["dragonBonusBanker","Dragon Bonus — Banker"],
-  ["dragonBonusPlayer","Dragon Bonus — Player"],
-  ["tiger6","Tiger 6"],
-  ["super6","Super 6"],
-  ["natural8","Banker Natural 8"],
-  ["natural9","Banker Natural 9"]
-];
-
-const COUNT_SYSTEMS = {
-  blazing7s: [1,0,-1,-1,-1,0,-6,2,2,1],
-  coverAll: [1,0,0,-1,-1,-1,-2,0,0,1],
-  dragonBonusPlayer: [2,3,3,1,0,0,-1,-2,-2,-1],
-  dragon7: [0,0,0,-1,-1,-1,-1,2,2,0],
-  heavenly9: [1,1,0,-1,-1,-1,-1,0,-2,1],
-  panda8: [1,1,-2,-2,-2,-1,-1,-2,4,1]
+const RL=['A','2','3','4','5','6','7','8','9','10','J','Q','K'],RV=[1,2,3,4,5,6,7,8,9,0,0,0,0];
+const LABEL={player:'Player',bankerCommission:'Banker — 5% Commission',bankerDragonPush:'Banker NC — Dragon 7 Push',tie8:'Tie — 8 to 1',playerPair:'Player Pair',bankerPair:'Banker Pair',dragonBonusPlayer:'Dragon Bonus — Player',dragonBonusBanker:'Dragon Bonus — Banker',dragon7:'Dragon 7',fortune7:'Fortune 7',panda8:'Panda 8',golden8:'Golden 8',tiger6:'Tiger',heavenly9:'Heavenly 9',blazing7s:'Blazing 7s',coverall:'Cover All'};
+const ALL=Object.keys(LABEL),L=(min,max)=>({min,max});
+const P={
+ hardRock:{name:'Hard Rock',bets:['bankerCommission','player','tie8','heavenly9','blazing7s','dragon7','panda8','coverall','dragonBonusPlayer','dragonBonusBanker','tiger6'],limits:{bankerCommission:L(100,15000),player:L(100,15000),tie8:L(100,3000),heavenly9:L(5,50),blazing7s:L(5,50),dragon7:L(5,50),panda8:L(5,50),coverall:L(5,50),dragonBonusPlayer:L(5,500),dragonBonusBanker:L(5,500),tiger6:L(5,500)},forced:'bankerCommission'},
+ resortsWorld:{name:'Resorts World NC',bets:['bankerDragonPush','player','tie8','dragon7','panda8','dragonBonusPlayer','dragonBonusBanker'],limits:{bankerDragonPush:L(25,10000),player:L(25,10000),tie8:L(25,3000),dragon7:L(5,200),panda8:L(5,200),dragonBonusPlayer:L(5,200),dragonBonusBanker:L(5,200)},forced:'bankerDragonPush'},
+ moheganNC:{name:'Mohegan Stadium NC',bets:['bankerDragonPush','player','tie8','dragonBonusPlayer','dragonBonusBanker','playerPair','bankerPair'],limits:{bankerDragonPush:L(5,3000),player:L(5,3000),tie8:L(5,3000),dragonBonusPlayer:L(1,500),dragonBonusBanker:L(1,500),playerPair:L(1,200),bankerPair:L(1,200)}},
+ moheganCommission:{name:'Mohegan Stadium Commission',bets:['bankerCommission','player','tie8','dragonBonusPlayer','dragonBonusBanker','playerPair','bankerPair'],limits:{bankerCommission:L(5,3000),player:L(5,3000),tie8:L(5,3000),dragonBonusPlayer:L(1,500),dragonBonusBanker:L(1,500),playerPair:L(1,200),bankerPair:L(1,200)}},
+ showAll:{name:'Show All',bets:ALL,limits:Object.fromEntries(ALL.map(k=>[k,L(5,300)]))}
 };
-
-const $ = id => document.getElementById(id);
-let state = loadState();
-let calcToken = 0;
-let worker = null;
-
-const RANK_LABELS = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const RANK_VALUES = [1,2,3,4,5,6,7,8,9,0,0,0,0];
-
-function freshCounts(decks) {
-  return Array(13).fill(4*decks);
+const $=x=>document.getElementById(x);let latest=null,worker=null,token=0,busy=false;
+const fresh=d=>Array(13).fill(4*d),clone=x=>JSON.parse(JSON.stringify(x));
+function enabledFor(profile){return Object.fromEntries(ALL.map(k=>[k,P[profile].bets.includes(k)]))}
+function limitsFor(profile){let out=Object.fromEntries(ALL.map(k=>[k,L(5,300)]));Object.assign(out,clone(P[profile].limits));return out}
+function def(){return{decks:8,counts:fresh(8),history:[],profile:'hardRock',bankroll:10000,fraction:.25,chip:5,limits:limitsFor('hardRock'),enabled:enabledFor('hardRock'),started:false,hand:[],locked:{},profit:0,log:[],undo:[]}}
+function load(){try{let x=JSON.parse(localStorage.getItem('bacLite4'));if(x&&x.counts?.length===13&&P[x.profile])return{...def(),...x,limits:{...limitsFor(x.profile),...(x.limits||{})},enabled:{...enabledFor(x.profile),...(x.enabled||{})},undo:[]}}catch{}return def()}let s=load();
+function save(){let x={...s,undo:[]};localStorage.setItem('bacLite4',JSON.stringify(x))}function snap(){let {undo,...x}=s;s.undo.push(JSON.stringify(x));if(s.undo.length>30)s.undo.shift()}
+function money(x){return(x<0?'-':'')+new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(Math.abs(x||0))}function pct(x){return(x*100).toFixed(3)+'%'}function cardsLeft(){return s.counts.reduce((a,b)=>a+b,0)}function shown(){return ALL.filter(k=>s.enabled[k])}function lim(k){return s.limits[k]||L(5,300)}function round(x){return Math.floor(x/Math.max(1,s.chip))*Math.max(1,s.chip)}
+function rec(k){let r=latest?.[k];if(!r||r.kelly<=0)return 0;let n=round(s.bankroll*r.kelly*s.fraction),z=lim(k);return n<z.min?0:Math.min(n,z.max)}function betsNow(){let b={};shown().forEach(k=>{let n=rec(k);if(n)b[k]=n});let f=P[s.profile].forced;if(f&&s.enabled[f])b[f]=Math.max(b[f]||0,lim(f).min);return b}
+function render(){
+ $('remaining').textContent=cardsLeft();$('entered').textContent=s.history.length;$('mode').textContent=s.started?'Live hands':'Burn entry';$('hands').textContent=s.log.length;$('profit').textContent=money(s.profit);$('profit').className='profit '+(s.profit>=0?'good':'bad');$('profile').value=s.profile;$('decks').value=s.decks;$('bankroll').value=s.bankroll;$('fraction').value=s.fraction;$('chip').value=s.chip;$('start').disabled=s.started||busy;$('start').textContent=s.started?'Hands Started':'Start Hands';$('undo').disabled=busy||!s.undo.length;
+ $('history').textContent=s.history.length?'Recent: '+s.history.slice(-30).map(x=>RL[x.rank]).join(' · '):'No cards entered.';
+ document.querySelectorAll('[data-r]').forEach(b=>b.disabled=busy||s.counts[+b.dataset.r]<=0);
+ $('log').innerHTML=s.log.length?s.log.slice().reverse().map((h,i)=>`<div class="logrow"><span>Hand ${s.log.length-i}: ${h.text}</span><strong class="${h.win>=0?'good':'bad'}">${money(h.win)}</strong></div>`).join(''):'<div class="note">No completed hands.</div>';
 }
-function defaultState() {
-  return {
-    decks:8, counts:freshCounts(8), history:[],
-    bankroll:10000, kellyFraction:0.25, chip:5, minBet:5, maxBet:300,
-    pairPayout:11
-  };
+function renderLimits(){
+ $('limits').innerHTML=ALL.map(k=>`<tr><td><input class="usebet" data-k="${k}" type="checkbox" ${s.enabled[k]?'checked':''}></td><td>${LABEL[k]}</td><td><input class="betlimit" data-k="${k}" data-x="min" type="number" value="${lim(k).min}"></td><td><input class="betlimit" data-k="${k}" data-x="max" type="number" value="${lim(k).max}"></td></tr>`).join('');
+ document.querySelectorAll('.usebet').forEach(i=>i.onchange=()=>{s.enabled[i.dataset.k]=i.checked;save();renderResults()});
+ document.querySelectorAll('.betlimit').forEach(i=>i.onchange=()=>{s.limits[i.dataset.k][i.dataset.x]=Math.max(0,+i.value||0);save();renderResults()})
 }
-function loadState() {
-  try {
-    const s = JSON.parse(localStorage.getItem("baccaratEvState"));
-    if (s && Array.isArray(s.counts) && s.counts.length === 13) return s;
-    // Old versions stored only baccarat values, which cannot preserve rank-pair data.
-    // Start a fresh shoe rather than silently produce incorrect pair EVs.
-  } catch {}
-  return defaultState();
-}
-function saveState() {
-  localStorage.setItem("baccaratEvState", JSON.stringify(state));
-}
-function money(x) {
-  return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(x || 0);
-}
-function pct(x) {
-  return (x*100).toFixed(3) + "%";
-}
-function roundToChip(x) {
-  const chip = Math.max(1, Number(state.chip)||1);
-  return Math.floor(x/chip)*chip;
-}
-function recommendedBet(fullKelly) {
-  if (!(fullKelly > 0)) return 0;
-  let amount = state.bankroll * fullKelly * state.kellyFraction;
-  amount = roundToChip(amount);
-  if (amount < state.minBet) return 0;
-  return Math.min(amount, state.maxBet);
-}
-function renderState() {
-  $("remaining").textContent = state.counts.reduce((a,b)=>a+b,0);
-  $("entered").textContent = state.history.length;
-  $("history").textContent = state.history.length
-    ? "Recent: " + state.history.slice(-30).map(r => RANK_LABELS[r]).join(" · ")
-    : "No cards entered.";
-  $("decks").value = String(state.decks);
-  $("bankroll").value = state.bankroll;
-  $("kellyFraction").value = String(state.kellyFraction);
-  $("chip").value = state.chip;
-  $("minBet").value = state.minBet;
-  $("maxBet").value = state.maxBet;
-  $("pairPayout").value = state.pairPayout ?? 11;
-
-  document.querySelectorAll("[data-rank]").forEach(btn => {
-    const r = Number(btn.dataset.rank);
-    btn.disabled = state.counts[r] <= 0;
-  });
-}
-function cardValueIndexFromRank(rank) {
-  // Count-system order is 1,2,3,...,9,10 where 10 represents all zero-value cards.
-  return rank <= 8 ? rank : 9;
-}
-
-function countStatsForBet(key) {
-  const tags = COUNT_SYSTEMS[key];
-  if (!tags) return null;
-
-  const removedByValue = Array(10).fill(0);
-  for (const rank of state.history) {
-    removedByValue[cardValueIndexFromRank(rank)]++;
-  }
-
-  const totalCount = removedByValue.reduce((sum, n, i) => sum + n * tags[i], 0);
-  const decksRemaining = state.counts.reduce((a,b)=>a+b,0) / 52;
-  const realCount = decksRemaining > 0 ? totalCount / decksRemaining : 0;
-
-  const tally = removedByValue
-    .map((n, i) => `${i === 9 ? "10" : i + 1}:${n}`)
-    .join(" ");
-
-  return { tally, totalCount, realCount };
-}
-
-function signed(x, digits=2) {
-  const n = Number(x);
-  return `${n > 0 ? "+" : ""}${n.toFixed(digits)}`;
-}
-
-function renderResults(data) {
-  const sortedBets = BETS
-    .map(([key,label], index) => ({key, label, index, ev:data[key].ev}))
-    .sort((a,b) => (b.ev - a.ev) || (a.index - b.index));
-
-  const html = sortedBets.map(({key,label}) => {
-    const r = data[key];
-    const evClass = r.ev > 0 ? "good" : "bad";
-    const rec = recommendedBet(r.kelly);
-    return `<article class="bet">
-      <div class="bethead">
-        <div class="betname">${label}</div>
-        <div class="ev ${evClass}">${pct(r.ev)}</div>
-      </div>
-      <div class="betmeta">
-        <div>Full Kelly: <strong>${(r.kelly*100).toFixed(3)}%</strong></div>
-        <div>Selected Kelly bet: <strong>${money(rec)}</strong></div>
-        <div>Variance: <strong>${r.variance.toFixed(3)}</strong></div>
-      </div>
-      ${(() => {
-        const cs = countStatsForBet(key);
-        if (!cs) return "";
-        return `<div class="countbox">
-          <!-- <div><span>Tally</span><strong>${cs.tally}</strong></div> -->
-          <div><span>TC</span><strong>${signed(cs.totalCount,0)}</strong></div>
-          <div><span>RC</span><strong>${signed(cs.realCount,2)}</strong></div>
-        </div>`;
-      })()}
-    </article>`;
-  }).join("");
-  $("results").innerHTML = html;
-}
-function dbPayout(natural, sideTotal, otherTotal) {
-  if (natural) {
-    if (sideTotal > otherTotal) return 1;
-    if (sideTotal === otherTotal) return 0;
-    return -1;
-  }
-  const m = sideTotal - otherTotal;
-  if (m===9) return 30;
-  if (m===8) return 10;
-  if (m===7) return 6;
-  if (m===6) return 4;
-  if (m===5) return 2;
-  if (m===4) return 1;
-  return -1;
-}
-function workerSource() {
-return `
-self.onmessage = function(e) {
-  const {counts, token, pairPayout} = e.data;
-  const c = counts.slice();
-  const values = [1,2,3,4,5,6,7,8,9,0,0,0,0];
-  const names = [
-    "player","bankerCommission","bankerDragonPush","tie8",
-    "playerPair","bankerPair",
-    "dragon7","panda8","heavenly9","blazing7s","coverAll",
-    "dragonBonusBanker","dragonBonusPlayer",
-    "tiger6","super6","natural8","natural9"
-  ];
-  const sum = Object.fromEntries(names.map(k=>[k,0]));
-  const sum2 = Object.fromEntries(names.map(k=>[k,0]));
-  const dist = Object.fromEntries(names.map(k=>[k,new Map()]));
-  let totalWeight = 0;
-
-  function add(k, payout, w) {
-    sum[k] += payout*w;
-    sum2[k] += payout*payout*w;
-    dist[k].set(payout, (dist[k].get(payout)||0) + w);
-  }
-  function db(natural, sideTotal, otherTotal) {
-    if (natural) {
-      if (sideTotal > otherTotal) return 1;
-      if (sideTotal === otherTotal) return 0;
-      return -1;
-    }
-    const m = sideTotal-otherTotal;
-    return m===9?30:m===8?10:m===7?6:m===6?4:m===5?2:m===4?1:-1;
-  }
-
-  for (let a=0;a<13;a++) {
-    let wa=c[a]; if (wa<=0) continue; c[a]--;
-    for (let b=0;b<13;b++) {
-      let wb=c[b]; if (wb<=0) continue; c[b]--;
-      const p1=(values[a]+values[b])%10;
-      for (let cc=0;cc<13;cc++) {
-        let wc=c[cc]; if (wc<=0) continue; c[cc]--;
-        for (let d=0;d<13;d++) {
-          let wd=c[d]; if (wd<=0) continue; c[d]--;
-          const b1=(values[cc]+values[d])%10;
-          for (let ee=0;ee<13;ee++) {
-            let we=c[ee]; if (we<=0) continue; c[ee]--;
-            for (let f=0;f<13;f++) {
-              let wf=c[f]; if (wf<=0) continue;
-              const w=wa*wb*wc*wd*we*wf;
-              let pt,bt,p3=0,b3=0;
-              const natural=(p1===8||p1===9||b1===8||b1===9);
-              if (natural) {
-                pt=p1; bt=b1;
-              } else if (p1===6||p1===7) {
-                pt=p1;
-                if (b1>=6) bt=b1;
-                else { bt=(b1+values[ee])%10; b3=1; }
-              } else {
-                pt=(p1+values[ee])%10; p3=1;
-                const pv=values[ee];
-                const draw=(b1<=2)||(b1===3&&pv!==8)||(b1===4&&pv>=2&&pv<=7)||
-                  (b1===5&&pv>=4&&pv<=7)||(b1===6&&pv>=6&&pv<=7);
-                if (draw) { bt=(b1+values[f])%10; b3=1; }
-                else bt=b1;
-              }
-
-              totalWeight += w;
-
-              // Main game bets
-              add("player", pt>bt ? 1 : (bt>pt ? -1 : 0), w);
-              add("bankerCommission", bt>pt ? 0.95 : (pt>bt ? -1 : 0), w);
-              add("bankerDragonPush",
-                  bt>pt ? ((bt===7&&b3) ? 0 : 1) : (pt>bt ? -1 : 0), w);
-              add("tie8", pt===bt ? 8 : -1, w);
-
-              // Pair bets are based on each side's original two cards.
-              add("playerPair", a===b ? pairPayout : -1, w);
-              add("bankerPair", cc===d ? pairPayout : -1, w);
-
-              // Side bets
-              const dragon7Hit = (bt>pt && bt===7 && b3===1);
-              const panda8Hit = (pt>bt && pt===8 && p3===1);
-
-              add("dragon7", dragon7Hit ? 40 : -1, w);
-              add("panda8", panda8Hit ? 25 : -1, w);
-
-              // Heavenly 9
-              let heavenlyPayout = -1;
-              let heavenlyHit = false;
-              if (bt===9 && b3===1 && pt===9 && p3===1) {
-                heavenlyPayout = 75;
-                heavenlyHit = true;
-              } else if (pt===9 && p3===1) {
-                heavenlyPayout = 10;
-                heavenlyHit = true;
-              } else if (bt===9 && b3===1) {
-                heavenlyPayout = 10;
-                heavenlyHit = true;
-              }
-              add("heavenly9", heavenlyPayout, w);
-
-              // Blazing 7s
-              let blazingPayout = -1;
-              let blazingHit = false;
-              if (bt===7 && b3===0 && pt===7 && p3===0) {
-                blazingPayout = 50;
-                blazingHit = true;
-              } else if (bt===7 && b3===1 && pt===7 && p3===1) {
-                blazingPayout = 200;
-                blazingHit = true;
-              }
-              add("blazing7s", blazingPayout, w);
-
-              // Cover All wins if any covered event occurs.
-              const coverAllHit = dragon7Hit || panda8Hit || heavenlyHit || blazingHit;
-              add("coverAll", coverAllHit ? 6 : -1, w);
-
-              add("dragonBonusBanker", db(natural,bt,pt), w);
-              add("dragonBonusPlayer", db(natural,pt,bt), w);
-              add("tiger6", (bt>pt&&bt===6&&!b3)?12:((bt>pt&&bt===6&&b3)?20:-1), w);
-              add("super6", (bt>pt&&bt===6)?12:-1, w);
-              add("natural8", (bt===8&&natural)?9:-1, w);
-              add("natural9", (bt===9&&natural)?9:-1, w);
-            }
-            c[ee]++;
-          }
-          c[d]++;
-        }
-        c[cc]++;
-      }
-      c[b]++;
-    }
-    c[a]++;
-  }
-
-  const out={token, cardsRemaining:counts.reduce((x,y)=>x+y,0)};
-  for (const k of names) {
-    const ev=sum[k]/totalWeight;
-    const variance=sum2[k]/totalWeight-ev*ev;
-    let kelly=0;
-    if (ev>0) {
-      // Exact Kelly solution: find f where E[X/(1+fX)] = 0.
-      let lo=0, hi=.999999999;
-      for (let iter=0;iter<80;iter++) {
-        const mid=(lo+hi)/2;
-        let derivative=0;
-        for (const [payout,weight] of dist[k]) {
-          derivative += weight * payout / (1 + mid*payout);
-        }
-        if (derivative > 0) lo=mid; else hi=mid;
-      }
-      kelly=(lo+hi)/2;
-    }
-    out[k]={ev,variance,kelly};
-  }
-  postMessage(out);
-};`;
-}
-function calculate() {
-  const cards = state.counts.reduce((a,b)=>a+b,0);
-  if (cards < 6) {
-    $("status").textContent = "At least six cards must remain.";
-    return;
-  }
-  calcToken++;
-  const token=calcToken;
-  $("status").textContent = "Calculating exact EVs…";
-  if (worker) worker.terminate();
-  const blob = new Blob([workerSource()], {type:"text/javascript"});
-  worker = new Worker(URL.createObjectURL(blob));
-  worker.onmessage = e => {
-    if (e.data.token !== calcToken) return;
-    renderResults(e.data);
-    $("status").textContent = "Updated.";
-  };
-  worker.onerror = () => $("status").textContent = "Calculation error.";
-  worker.postMessage({
-    counts:state.counts,
-    token,
-    pairPayout:Number(state.pairPayout ?? 11)
-  });
-}
-function addCard(rank) {
-  if (state.counts[rank] <= 0) return;
-  state.counts[rank]--;
-  state.history.push(rank);
-  saveState(); renderState(); calculate();
-}
-document.querySelectorAll("[data-rank]").forEach(btn =>
-  btn.addEventListener("click",()=>addCard(Number(btn.dataset.rank)))
-);
-$("undo").addEventListener("click",()=>{
-  const v=state.history.pop();
-  if (v===undefined) return;
-  state.counts[v]++;
-  saveState(); renderState(); calculate();
-});
-$("reset").addEventListener("click",()=>{
-  if (!confirm("Start a new shoe and erase the entered-card history?")) return;
-  state.counts=freshCounts(state.decks);
-  state.history=[];
-  saveState(); renderState(); calculate();
-});
-$("decks").addEventListener("change",e=>{
-  state.decks=Number(e.target.value);
-  state.counts=freshCounts(state.decks);
-  state.history=[];
-  saveState(); renderState(); calculate();
-});
-for (const id of ["bankroll","chip","minBet","maxBet","pairPayout"]) {
-  $(id).addEventListener("change",e=>{
-    state[id]=Math.max(0,Number(e.target.value)||0);
-    saveState(); renderState(); calculate();
-  });
-}
-$("kellyFraction").addEventListener("change",e=>{
-  state.kellyFraction=Number(e.target.value);
-  saveState(); renderState(); calculate();
-});
-
-renderState();
-calculate();
-</script>
-</body>
-</html>
+function renderResults(){if(!latest)return;$('results').innerHTML=shown().map(k=>{let r=latest[k],n=rec(k),f=P[s.profile].forced===k&&s.enabled[k],a=f?Math.max(n,lim(k).min):n;return`<article class="bet"><div class="bethead"><div class="betname">${LABEL[k]}</div><div class="ev ${r.ev>0?'good':'bad'}">${pct(r.ev)}</div></div><div class="meta"><div>Full Kelly: <strong>${pct(r.kelly)}</strong></div><div>Suggested: <strong>${money(a)}</strong>${f&&n===0?' forced min':''}</div><div>Limits: <strong>${money(lim(k).min)}–${money(lim(k).max)}</strong></div><div>Variance: <strong>${r.variance.toFixed(3)}</strong></div></div></article>`}).join('')}
+function bdraw(b,pv,pd){if(!pd)return b<=5;if(b<=2)return true;if(b===3)return pv!==8;if(b===4)return pv>=2&&pv<=7;if(b===5)return pv>=4&&pv<=7;if(b===6)return pv===6||pv===7;return false}
+function handState(c){if(c.length<4)return{done:false,next:['P1','B1','P2','B2'][c.length]};let p=(RV[c[0]]+RV[c[2]])%10,b=(RV[c[1]]+RV[c[3]])%10,n=[8,9].includes(p)||[8,9].includes(b);if(n)return{done:true};if(p>=6)return bdraw(b,0,false)?(c.length>=5?{done:true}:{next:'B3'}):{done:true};if(c.length<5)return{next:'P3'};return bdraw(b,RV[c[4]],true)?(c.length>=6?{done:true}:{next:'B3'}):{done:true}}
+function resolve(c){let pr=[c[0],c[2]],br=[c[1],c[3]],pi=(RV[pr[0]]+RV[pr[1]])%10,bi=(RV[br[0]]+RV[br[1]])%10,n=[8,9].includes(pi)||[8,9].includes(bi),p=pi,b=bi,p3=false,b3=false;if(!n){if(pi<=5){p3=true;pr.push(c[4]);p=(pi+RV[c[4]])%10;if(bdraw(bi,RV[c[4]],true)){b3=true;br.push(c[5]);b=(bi+RV[c[5]])%10}}else if(bdraw(bi,0,false)){b3=true;br.push(c[4]);b=(bi+RV[c[4]])%10}}return{pr,br,p,b,p3,b3,n}}
+function db(x,y,n){if(n)return x>y?1:x===y?0:-1;let m=x-y;return m===9?30:m===8?10:m===7?6:m===6?4:m===5?2:m===4?1:-1}
+function payout(k,o){let p=o.p,b=o.b;switch(k){case'player':return p>b?1:b>p?-1:0;case'bankerCommission':return b>p?.95:p>b?-1:0;case'bankerDragonPush':return b>p?(b===7&&o.b3?0:1):p>b?-1:0;case'tie8':return p===b?8:-1;case'playerPair':return o.pr[0]===o.pr[1]?11:-1;case'bankerPair':return o.br[0]===o.br[1]?11:-1;case'dragonBonusPlayer':return db(p,b,o.n);case'dragonBonusBanker':return db(b,p,o.n);case'dragon7':case'fortune7':return b>p&&b===7&&o.b3?40:-1;case'panda8':case'golden8':return p>b&&p===8&&o.p3?25:-1;case'tiger6':return b>p&&b===6?(o.b3?20:12):-1;case'heavenly9':{let q=(o.p3&&p===9)+(o.b3&&b===9);return q===2?75:q===1?10:-1}case'blazing7s':return p===7&&b===7&&o.p3===o.b3?(o.p3?200:50):-1;case'coverall':return((b>p&&b===7&&o.b3)||(p>b&&p===8&&o.p3)||(o.p3&&p===9)||(o.b3&&b===9)||(p===7&&b===7&&o.p3===o.b3))?6:-1}}
+function settle(){let o=resolve(s.hand),win=0,d=[];Object.entries(s.locked).forEach(([k,a])=>{let q=payout(k,o),z=a*q;win+=z;d.push(`${LABEL[k]} ${money(a)} ${q===0?'push':money(z)}`)});s.profit+=win;s.log.push({win,text:`P ${o.p} / B ${o.b}; ${d.length?d.join(', '):'no bets'}`});s.hand=[];s.locked={};save();calculate(true)}
+function add(r){if(busy||s.counts[r]<=0)return;snap();s.counts[r]--;s.history.push({rank:r});if(s.started){s.hand.push(r);let h=handState(s.hand);if(h.done){render();settle();return}$('status').textContent='Enter '+h.next}else $('status').textContent='Burn entry';save();render();calculate(false)}
+function start(){if(busy||s.started||!latest)return;snap();s.started=true;s.locked=betsNow();save();render();$('status').textContent='Enter P1'}
+function reset(ask=true){if(ask&&!confirm('Start a new shoe and clear profit?'))return;s.counts=fresh(s.decks);s.history=[];s.started=false;s.hand=[];s.locked={};s.profit=0;s.log=[];s.undo=[];latest=null;save();render();calculate(false)}
+function undo(){if(busy||!s.undo.length)return;let prev=JSON.parse(s.undo.pop()),u=s.undo;s={...prev,undo:u};save();render();renderLimits();calculate(false)}
+function workerCode(){return `self.onmessage=e=>{const{r,t}=e.data,v=[r.slice(9).reduce((a,b)=>a+b,0),...r.slice(0,9)],c=v.slice(),names=${JSON.stringify(ALL.filter(k=>!['playerPair','bankerPair'].includes(k)))},S=Object.fromEntries(names.map(k=>[k,0])),S2=Object.fromEntries(names.map(k=>[k,0])),D=Object.fromEntries(names.map(k=>[k,new Map()]));let T=0;const A=(k,x,w)=>{S[k]+=x*w;S2[k]+=x*x*w;D[k].set(x,(D[k].get(x)||0)+w)},DB=(x,y,n)=>{if(n)return x>y?1:x===y?0:-1;let m=x-y;return m===9?30:m===8?10:m===7?6:m===6?4:m===5?2:m===4?1:-1};for(let a=0;a<10;a++){let wa=c[a];if(!wa)continue;c[a]--;for(let b=0;b<10;b++){let wb=c[b];if(!wb)continue;c[b]--;let pi=(a+b)%10;for(let q=0;q<10;q++){let wq=c[q];if(!wq)continue;c[q]--;for(let d=0;d<10;d++){let wd=c[d];if(!wd)continue;c[d]--;let bi=(q+d)%10;for(let x=0;x<10;x++){let wx=c[x];if(!wx)continue;c[x]--;for(let f=0;f<10;f++){let wf=c[f];if(!wf)continue;let w=wa*wb*wq*wd*wx*wf,p,bk,p3=0,b3=0,n=pi===8||pi===9||bi===8||bi===9;if(n){p=pi;bk=bi}else if(pi>=6){p=pi;if(bi>=6)bk=bi;else{bk=(bi+x)%10;b3=1}}else{p=(pi+x)%10;p3=1;let z=bi<=2||(bi===3&&x!==8)||(bi===4&&x>=2&&x<=7)||(bi===5&&x>=4&&x<=7)||(bi===6&&(x===6||x===7));if(z){bk=(bi+f)%10;b3=1}else bk=bi}T+=w;A('player',p>bk?1:bk>p?-1:0,w);A('bankerCommission',bk>p?.95:p>bk?-1:0,w);A('bankerDragonPush',bk>p?(bk===7&&b3?0:1):p>bk?-1:0,w);A('tie8',p===bk?8:-1,w);A('dragonBonusPlayer',DB(p,bk,n),w);A('dragonBonusBanker',DB(bk,p,n),w);let d7=bk>p&&bk===7&&b3?40:-1;A('dragon7',d7,w);A('fortune7',d7,w);let p8=p>bk&&p===8&&p3?25:-1;A('panda8',p8,w);A('golden8',p8,w);A('tiger6',bk>p&&bk===6?(b3?20:12):-1,w);let h=(p3&&p===9?1:0)+(b3&&bk===9?1:0);A('heavenly9',h===2?75:h===1?10:-1,w);A('blazing7s',p===7&&bk===7&&p3===b3?(p3?200:50):-1,w);let co=(bk>p&&bk===7&&b3)||(p>bk&&p===8&&p3)||(p3&&p===9)||(b3&&bk===9)||(p===7&&bk===7&&p3===b3);A('coverall',co?6:-1,w)}c[x]++}c[d]++}c[q]++}c[b]++}c[a]++}const F=(ev,va,M)=>{let k=0;if(ev>0){let lo=0,hi=.999999;for(let i=0;i<70;i++){let m=(lo+hi)/2,z=0;for(const[x,w]of M)z+=w*x/(1+m*x);if(z>0)lo=m;else hi=m}k=(lo+hi)/2}return{ev,variance:va,kelly:k}},o={t};for(const k of names){let ev=S[k]/T,va=S2[k]/T-ev*ev;o[k]=F(ev,va,D[k])}let N=r.reduce((a,b)=>a+b,0),pp=r.reduce((a,n)=>a+n*(n-1),0)/(N*(N-1)),ev=12*pp-1,va=121*pp+(1-pp)-ev*ev,M=new Map([[11,pp],[-1,1-pp]]);o.playerPair=F(ev,va,M);o.bankerPair={...o.playerPair};postMessage(o)}`}
+function calculate(after){if(cardsLeft()<6)return;token++;let t=token;busy=true;render();$('status').textContent=after?'Settling and calculating next bets…':'Calculating EVs…';if(worker)worker.terminate();worker=new Worker(URL.createObjectURL(new Blob([workerCode()],{type:'text/javascript'})));worker.onmessage=e=>{if(e.data.t!==token)return;latest=e.data;busy=false;render();renderResults();if(s.started&&!s.hand.length){s.locked=betsNow();save();$('status').textContent='Next bets locked. Enter P1'}else if(!s.started)$('status').textContent='Enter burns, then tap Start Hands'};worker.onerror=()=>{busy=false;render();$('status').textContent='Calculation error'};worker.postMessage({r:s.counts,t})}
+$('cards').innerHTML=RL.map((x,i)=>`<button class="card" data-r="${i}">${x}<small>${i>=9?'value 0':''}</small></button>`).join('');document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>add(+b.dataset.r));$('profile').innerHTML=Object.entries(P).map(([k,x])=>`<option value="${k}">${x.name}</option>`).join('');$('profile').onchange=e=>{if((s.history.length||s.log.length)&&!confirm('Changing profile starts a new shoe. Continue?')){e.target.value=s.profile;return}s.profile=e.target.value;s.limits=limitsFor(s.profile);s.enabled=enabledFor(s.profile);reset(false);renderLimits()};$('start').onclick=start;$('undo').onclick=undo;$('reset').onclick=()=>reset(true);$('decks').onchange=e=>{s.decks=+e.target.value;reset(false)};$('bankroll').onchange=e=>{s.bankroll=Math.max(0,+e.target.value||0);save();renderResults()};$('fraction').onchange=e=>{s.fraction=+e.target.value;save();renderResults()};$('chip').onchange=e=>{s.chip=Math.max(1,+e.target.value||1);save();renderResults()};renderLimits();render();calculate(false);
+</script></main></body></html>
