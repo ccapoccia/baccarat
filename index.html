@@ -108,6 +108,7 @@ input, select {
     <div class="history" id="history">No cards entered.</div>
   </section>
 
+  <div class="note">Results are automatically ranked from the highest bettor EV to the lowest.</div>
   <section class="grid" id="results"></section>
 
   <details class="panel">
@@ -241,7 +242,11 @@ function renderState() {
   });
 }
 function renderResults(data) {
-  const html = BETS.map(([key,label]) => {
+  const sortedBets = BETS
+    .map(([key,label], index) => ({key, label, index, ev:data[key].ev}))
+    .sort((a,b) => (b.ev - a.ev) || (a.index - b.index));
+
+  const html = sortedBets.map(({key,label}) => {
     const r = data[key];
     const evClass = r.ev > 0 ? "good" : "bad";
     const rec = recommendedBet(r.kelly);
