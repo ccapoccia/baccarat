@@ -315,7 +315,7 @@ function renderResults(data) {
         const cs = countStatsForBet(key);
         if (!cs) return "";
         return `<div class="countbox">
-          <div><span>Tally</span><strong>${cs.tally}</strong></div>
+          <!-- <div><span>Tally</span><strong>${cs.tally}</strong></div> -->
           <div><span>TC</span><strong>${signed(cs.totalCount,0)}</strong></div>
           <div><span>RC</span><strong>${signed(cs.realCount,2)}</strong></div>
         </div>`;
