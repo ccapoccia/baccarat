@@ -19,11 +19,22 @@
 <section class="panel"><div class="row"><div><div class="stat">Assumed profit this shoe</div><div id="profit" class="profit">$0</div></div><div class="stat">Hands settled: <strong id="hands"></strong></div></div><div class="note">All enabled, suggested non-zero bets are assumed placed. Hard Rock and Resorts World NC also force the profile minimum Banker bet each hand when that Banker bet is enabled.</div><div id="log" class="log"></div></section>
 <section id="results" class="grid"></section>
 <details class="panel"><summary>Bankroll and limits</summary><div class="settings"><label>Decks<select id="decks"><option>6</option><option selected>8</option></select></label><label>Bankroll ($)<input id="bankroll" type="number" min="0" step="100"></label><label>Kelly fraction<select id="fraction"><option value="1">Full</option><option value="0.5">Half</option><option value="0.25">Quarter</option><option value="0.125">Eighth</option></select></label><label>Chip increment ($)<input id="chip" type="number" min="1" step="1"></label></div><table><thead><tr><th>Use</th><th>Bet</th><th>Min</th><th>Max</th></tr></thead><tbody id="limits"></tbody></table><div class="note">Profile defaults load when the profile changes. Check or uncheck any bet to add or remove it for the current session; enabled bets are displayed and included in profit tracking.</div></details>
-<div class="note">Single offline HTML file. Pair EV uses exact ranks. Main and side-bet EVs use the remaining shoe.</div>
+<div class="note">Single offline HTML file. Enabled wagers are sorted by exact EV, highest first. RC/TC is shown for side bets with configured count tags; a dash means no count system is currently defined. Pair EV uses exact ranks.</div>
 <script>
 const RL=['A','2','3','4','5','6','7','8','9','10','J','Q','K'],RV=[1,2,3,4,5,6,7,8,9,0,0,0,0];
 const LABEL={player:'Player',bankerCommission:'Banker — 5% Commission',bankerDragonPush:'Banker NC — Dragon 7 Push',tie8:'Tie — 8 to 1',playerPair:'Player Pair',bankerPair:'Banker Pair',dragonBonusPlayer:'Dragon Bonus — Player',dragonBonusBanker:'Dragon Bonus — Banker',dragon7:'Dragon 7',fortune7:'Fortune 7',panda8:'Panda 8',golden8:'Golden 8',tiger6:'Tiger',heavenly9:'Heavenly 9',blazing7s:'Blazing 7s',coverall:'Cover All'};
 const ALL=Object.keys(LABEL),L=(min,max)=>({min,max});
+// Count tags are indexed by baccarat value 0 through 9.
+// These restore the side-bet count systems previously used in the calculator.
+const COUNT_TAGS = {
+  blazing7s: [1, 0, -1, -1, -1, 0, -6, 2, 2, 1],
+  coverall: [1, 0, 0, -1, -1, -1, -2, 0, 0, 1],
+  dragonBonusPlayer: [2, 3, 3, 1, 0, 0, -1, -2, -2, -1],
+  dragon7: [0, 0, 0, -1, -1, -1, -1, 2, 2, 0],
+  fortune7: [0, 0, 0, -1, -1, -1, -1, 2, 2, 0],
+  heavenly9: [1, 1, 0, -1, -1, -1, -1, 0, -2, 1]
+};
+const SIDE_BETS=new Set(['playerPair','bankerPair','dragonBonusPlayer','dragonBonusBanker','dragon7','fortune7','panda8','golden8','tiger6','heavenly9','blazing7s','coverall']);
 const P={
  hardRock:{name:'Hard Rock',bets:['bankerCommission','player','tie8','heavenly9','blazing7s','dragon7','panda8','coverall','dragonBonusPlayer','dragonBonusBanker','tiger6'],limits:{bankerCommission:L(100,15000),player:L(100,15000),tie8:L(100,3000),heavenly9:L(5,50),blazing7s:L(5,50),dragon7:L(5,50),panda8:L(5,50),coverall:L(5,50),dragonBonusPlayer:L(5,500),dragonBonusBanker:L(5,500),tiger6:L(5,500)},forced:'bankerCommission'},
  resortsWorld:{name:'Resorts World NC',bets:['bankerDragonPush','player','tie8','dragon7','panda8','dragonBonusPlayer','dragonBonusBanker'],limits:{bankerDragonPush:L(25,10000),player:L(25,10000),tie8:L(25,3000),dragon7:L(5,200),panda8:L(5,200),dragonBonusPlayer:L(5,200),dragonBonusBanker:L(5,200)},forced:'bankerDragonPush'},
@@ -39,6 +50,9 @@ function def(){return{decks:8,counts:fresh(8),history:[],profile:'hardRock',bank
 function load(){try{let x=JSON.parse(localStorage.getItem('bacLite4'));if(x&&x.counts?.length===13&&P[x.profile])return{...def(),...x,limits:{...limitsFor(x.profile),...(x.limits||{})},enabled:{...enabledFor(x.profile),...(x.enabled||{})},undo:[]}}catch{}return def()}let s=load();
 function save(){let x={...s,undo:[]};localStorage.setItem('bacLite4',JSON.stringify(x))}function snap(){let {undo,...x}=s;s.undo.push(JSON.stringify(x));if(s.undo.length>30)s.undo.shift()}
 function money(x){return(x<0?'-':'')+new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(Math.abs(x||0))}function pct(x){return(x*100).toFixed(3)+'%'}function cardsLeft(){return s.counts.reduce((a,b)=>a+b,0)}function shown(){return ALL.filter(k=>s.enabled[k])}function lim(k){return s.limits[k]||L(5,300)}function round(x){return Math.floor(x/Math.max(1,s.chip))*Math.max(1,s.chip)}
+function remainingByValue(){return [s.counts.slice(9).reduce((a,b)=>a+b,0),...s.counts.slice(0,9)]}
+function countInfo(k){let tags=COUNT_TAGS[k];if(!tags)return null;let rem=remainingByValue(),initial=[16*s.decks,...Array(9).fill(4*s.decks)],rc=0;for(let v=0;v<10;v++)rc+=(initial[v]-rem[v])*tags[v];let decksRemaining=cardsLeft()/52,tc=decksRemaining>0?rc/decksRemaining:0;return{rc,tc}}
+function fmtCount(x){return(x>=0?'+':'')+(Math.abs(x-Math.round(x))<1e-9?Math.round(x):x.toFixed(2))}
 function rec(k){let r=latest?.[k];if(!r||r.kelly<=0)return 0;let n=round(s.bankroll*r.kelly*s.fraction),z=lim(k);return n<z.min?0:Math.min(n,z.max)}function betsNow(){let b={};shown().forEach(k=>{let n=rec(k);if(n)b[k]=n});let f=P[s.profile].forced;if(f&&s.enabled[f])b[f]=Math.max(b[f]||0,lim(f).min);return b}
 function render(){
  $('remaining').textContent=cardsLeft();$('entered').textContent=s.history.length;$('mode').textContent=s.started?'Live hands':'Burn entry';$('hands').textContent=s.log.length;$('profit').textContent=money(s.profit);$('profit').className='profit '+(s.profit>=0?'good':'bad');$('profile').value=s.profile;$('decks').value=s.decks;$('bankroll').value=s.bankroll;$('fraction').value=s.fraction;$('chip').value=s.chip;$('start').disabled=s.started||busy;$('start').textContent=s.started?'Hands Started':'Start Hands';$('undo').disabled=busy||!s.undo.length;
@@ -51,7 +65,15 @@ function renderLimits(){
  document.querySelectorAll('.usebet').forEach(i=>i.onchange=()=>{s.enabled[i.dataset.k]=i.checked;save();renderResults()});
  document.querySelectorAll('.betlimit').forEach(i=>i.onchange=()=>{s.limits[i.dataset.k][i.dataset.x]=Math.max(0,+i.value||0);save();renderResults()})
 }
-function renderResults(){if(!latest)return;$('results').innerHTML=shown().map(k=>{let r=latest[k],n=rec(k),f=P[s.profile].forced===k&&s.enabled[k],a=f?Math.max(n,lim(k).min):n;return`<article class="bet"><div class="bethead"><div class="betname">${LABEL[k]}</div><div class="ev ${r.ev>0?'good':'bad'}">${pct(r.ev)}</div></div><div class="meta"><div>Full Kelly: <strong>${pct(r.kelly)}</strong></div><div>Suggested: <strong>${money(a)}</strong>${f&&n===0?' forced min':''}</div><div>Limits: <strong>${money(lim(k).min)}–${money(lim(k).max)}</strong></div><div>Variance: <strong>${r.variance.toFixed(3)}</strong></div></div></article>`}).join('')}
+function renderResults(){
+ if(!latest)return;
+ let ordered=shown().slice().sort((a,b)=>(latest[b]?.ev??-Infinity)-(latest[a]?.ev??-Infinity));
+ $('results').innerHTML=ordered.map(k=>{
+  let r=latest[k],n=rec(k),f=P[s.profile].forced===k&&s.enabled[k],a=f?Math.max(n,lim(k).min):n,c=SIDE_BETS.has(k)?countInfo(k):null;
+  let countHtml=SIDE_BETS.has(k)?`<div>RC: <strong>${c?fmtCount(c.rc):'—'}</strong></div><div>TC: <strong>${c?fmtCount(c.tc):'—'}</strong></div>`:'';
+  return`<article class="bet"><div class="bethead"><div class="betname">${LABEL[k]}</div><div class="ev ${r.ev>0?'good':'bad'}">${pct(r.ev)}</div></div><div class="meta">${countHtml}<div>Full Kelly: <strong>${pct(r.kelly)}</strong></div><div>Suggested: <strong>${money(a)}</strong>${f&&n===0?' forced min':''}</div><div>Limits: <strong>${money(lim(k).min)}–${money(lim(k).max)}</strong></div><div>Variance: <strong>${r.variance.toFixed(3)}</strong></div></div></article>`
+ }).join('')
+}
 function bdraw(b,pv,pd){if(!pd)return b<=5;if(b<=2)return true;if(b===3)return pv!==8;if(b===4)return pv>=2&&pv<=7;if(b===5)return pv>=4&&pv<=7;if(b===6)return pv===6||pv===7;return false}
 function handState(c){if(c.length<4)return{done:false,next:['P1','B1','P2','B2'][c.length]};let p=(RV[c[0]]+RV[c[2]])%10,b=(RV[c[1]]+RV[c[3]])%10,n=[8,9].includes(p)||[8,9].includes(b);if(n)return{done:true};if(p>=6)return bdraw(b,0,false)?(c.length>=5?{done:true}:{next:'B3'}):{done:true};if(c.length<5)return{next:'P3'};return bdraw(b,RV[c[4]],true)?(c.length>=6?{done:true}:{next:'B3'}):{done:true}}
 function resolve(c){let pr=[c[0],c[2]],br=[c[1],c[3]],pi=(RV[pr[0]]+RV[pr[1]])%10,bi=(RV[br[0]]+RV[br[1]])%10,n=[8,9].includes(pi)||[8,9].includes(bi),p=pi,b=bi,p3=false,b3=false;if(!n){if(pi<=5){p3=true;pr.push(c[4]);p=(pi+RV[c[4]])%10;if(bdraw(bi,RV[c[4]],true)){b3=true;br.push(c[5]);b=(bi+RV[c[5]])%10}}else if(bdraw(bi,0,false)){b3=true;br.push(c[4]);b=(bi+RV[c[4]])%10}}return{pr,br,p,b,p3,b3,n}}
